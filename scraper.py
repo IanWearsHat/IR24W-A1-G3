@@ -1,9 +1,29 @@
 import re
+from lxml import html
+from lxml.cssselect import CSSSelector
+from bs4 import UnicodeDammit 
 from urllib.parse import urlparse
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
+
+def decode_html(html_string):
+    """
+    Uses Beautiful Soup to detect encoding.
+    
+    Returns Unicode string if successful
+
+    Code taken from lxml docs at the website below:
+    https://lxml.de/elementsoup.html#:~:text=(tag_soup)-,Using%20only%20the%20encoding%20detection,-Even%20if%20you
+    """
+    converted = UnicodeDammit(html_string)
+    if not converted.unicode_markup:
+        raise UnicodeDecodeError(
+            "Failed to detect encoding, tried [%s]",
+            ', '.join(converted.tried_encodings))
+
+    return converted.unicode_markup
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -14,8 +34,29 @@ def extract_next_links(url, resp):
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
+
+    debug = True
+
+    if (resp.status != 200):
+        return list()
+
+    try:
+        decoded = decode_html(resp.raw_response.content)
+        html_tree = html.fromstring(decoded)
+        html_tree.make_links_absolute(url, resolve_base_href=True)
+
+        if debug:
+            print("START")
+            for e in html.iterlinks(html_tree):
+                if is_valid(e[2]):
+                    print(e[2])
+            print("END\n")
+
+        return [e[2] for e in html.iterlinks(html_tree) if is_valid(e[2])]
+    except UnicodeDecodeError:
+        return list()
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
