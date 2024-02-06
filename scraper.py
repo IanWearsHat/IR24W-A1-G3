@@ -50,6 +50,15 @@ def decode_html(html_string):
     return converted.unicode_markup
 
 
+def has_no_page_data(soup_text: str) -> bool:
+    """
+    Detect if there is any text content on the webpage.
+
+    Handles "dead URLs that return a 200 status but no data"
+    """
+    return len(soup_text) == 0
+
+
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
@@ -70,7 +79,13 @@ def extract_next_links(url, resp):
 
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
-    # text = soup.get_text(separator=' ', strip=True)
+    text = soup.get_text(separator=' ', strip=True)
+
+    # TODO: maybe have all trap checks in one function
+    if has_no_page_data(text):
+        return list()
+    
+    # example use for get_no_stop_words
     # get_no_stop_words(text)
 
     a_tags = soup.findAll("a")
@@ -80,6 +95,7 @@ def extract_next_links(url, resp):
             content = content.strip()
         else:
             continue
+        # TODO: in the below if check, use is_valid
         if "https" in content or "http" in content:
             hyperlinks.append(content)
 
