@@ -1,12 +1,20 @@
 import re
 from lxml import html
-from lxml.cssselect import CSSSelector
-from bs4 import UnicodeDammit 
+from bs4 import UnicodeDammit, BeautifulSoup
 from urllib.parse import urlparse
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    valid_links = []
+    save_all_valid_urls = open("urls.txt", "a")
+    for link in links:
+        if is_valid(link):
+            save_all_valid_urls.write(link + "\n")
+            valid_links.append(link)
+    save_all_valid_urls.close()
+    return valid_links
+
 
 def decode_html(html_string):
     """
@@ -25,6 +33,7 @@ def decode_html(html_string):
 
     return converted.unicode_markup
 
+
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
@@ -38,24 +47,23 @@ def extract_next_links(url, resp):
 
     debug = True
 
+    hyperlinks = []
+
     if (resp.status != 200):
         return list()
 
-    try:
-        decoded = decode_html(resp.raw_response.content)
-        html_tree = html.fromstring(decoded)
-        html_tree.make_links_absolute(url, resolve_base_href=True)
+    soup = BeautifulSoup(resp.raw_response.content, "lxml")
+    a_tags = soup.findAll("a")
+    for link in a_tags:
+        content = link.get("href")
+        if content:
+            content = content.strip()
+        else:
+            continue
+        if "https" in content or "http" in content:
+            hyperlinks.append(content)
 
-        if debug:
-            print("START")
-            for e in html.iterlinks(html_tree):
-                if is_valid(e[2]):
-                    print(e[2])
-            print("END\n")
-
-        return [e[2] for e in html.iterlinks(html_tree) if is_valid(e[2])]
-    except UnicodeDecodeError:
-        return list()
+    return hyperlinks
 
 
 def is_valid(url):
