@@ -1,9 +1,17 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    valid_links = []
+    save_all_valid_urls = open("urls.txt", "a")
+    for link in links:
+        if is_valid(link):
+            save_all_valid_urls.write(link + "\n")
+            valid_links.append(link)
+    save_all_valid_urls.close()
+    return valid_links
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -15,17 +23,38 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    # <a href="https://xxxx"></a>
+    hyperlinks = []
+    if resp.status == 200:
+        soup = BeautifulSoup(resp.raw_response.content, "lxml")
+        a_tags = soup.findAll("a")
+        for link in a_tags:
+            content = link.get("href")
+            if content:
+                content = content.strip()
+            else:
+                continue
+            if "https" in content or "http" in content:
+                hyperlinks.append(content)
+    return hyperlinks
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+    url_paths = [".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu"]
     try:
+        path_match = False
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
-        return not re.match(
+        if parsed.hostname is None:
+            return False
+        for path in url_paths:
+            if path in parsed.hostname:
+                path_match = True
+        
+        return path_match and not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
