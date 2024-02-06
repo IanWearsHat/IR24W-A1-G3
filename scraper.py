@@ -16,6 +16,22 @@ def scraper(url, resp):
     return valid_links
 
 
+def load_stop_words(file_path):
+    with open(file_path, 'r') as file:
+        stop_words = set(file.read().strip().split('\n'))
+    return stop_words
+
+
+def get_no_stop_words(page_text: str):
+    stop_words_file = "stopword.txt"
+    stop_words = load_stop_words(stop_words_file)
+    words = page_text.split()
+
+    filtered_text = ' '.join([word for word in words if word.lower() not in stop_words])
+
+    return filtered_text
+
+
 def decode_html(html_string):
     """
     Uses Beautiful Soup to detect encoding.
@@ -53,6 +69,10 @@ def extract_next_links(url, resp):
         return list()
 
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
+
+    # text = soup.get_text(separator=' ', strip=True)
+    # get_no_stop_words(text)
+
     a_tags = soup.findAll("a")
     for link in a_tags:
         content = link.get("href")
