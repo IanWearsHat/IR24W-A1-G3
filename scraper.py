@@ -113,6 +113,16 @@ def extract_next_links(url, resp):
     return hyperlinks
 
 
+def is_allowed_domain(netloc: str):
+    if any(domain in netloc for domain in set([".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu"])):
+        return True
+    
+    if any(domain == netloc for domain in set(["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"])):
+        return True
+    
+    return False
+
+
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
@@ -123,7 +133,7 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]):
             return False
 
-        if not any(domain in parsed.netloc for domain in set(["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"])):
+        if not is_allowed_domain(parsed.netloc):
             return False
 
         return not re.match(
