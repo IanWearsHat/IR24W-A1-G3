@@ -50,6 +50,9 @@ def decode_html(html_string):
     return converted.unicode_markup
 
 
+# TODO: see if "no data" means like one word or something
+# ex. "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
+# gives "Forbidden" which isn't really anything
 def has_no_page_data(soup_text: str) -> bool:
     """
     Detect if there is any text content on the webpage.
@@ -70,6 +73,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
 
+    # TODO: look at robots.txt for sites and see if it's even required to check robots.txt
     debug = True
 
     hyperlinks = []
@@ -96,7 +100,7 @@ def extract_next_links(url, resp):
         else:
             continue
         # TODO: in the below if check, use is_valid
-        if "https" in content or "http" in content:
+        if is_valid(url):
             hyperlinks.append(content)
 
     return hyperlinks
@@ -108,8 +112,13 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
+
         if parsed.scheme not in set(["http", "https"]):
             return False
+
+        if not any(domain in parsed.netloc for domain in set(["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"])):
+            return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -120,6 +129,33 @@ def is_valid(url):
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
+        # TODO: see if you need to check for parsed.query bc of urls like
+        # "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
+
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+
+if __name__ == '__main__':
+    from utils.download import download
+    from utils.config import Config
+    from utils.server_registration import get_cache_server
+    from configparser import ConfigParser
+
+    cparser = ConfigParser()
+    cparser.read("config.ini")
+    config = Config(cparser)
+    config.cache_server = get_cache_server(config, False)
+
+    test_url = "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
+    # test_url = "http://sli.ics.uci.edu/Classes/2015W-273a"
+    print(urlparse(test_url))
+    print(is_valid(test_url))
+
+    resp = download(test_url, config)
+    soup = BeautifulSoup(resp.raw_response.content, "lxml")
+    text = soup.get_text(separator=' ', strip=True)
+
+    print(resp.status != 200)
+    print(text)
