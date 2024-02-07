@@ -23,6 +23,23 @@ def load_stop_words(file_path):
     return stop_words
 
 
+def is_page_informative(page, max_words = 100):
+    text_content = page.get_text().strip() # get text from page and remove ending space
+    text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
+    tokens = re.findall(r'\w+', text_content, re.IGNORECASE) # get token
+    if len(tokens) > max_words:
+        return True
+    return False
+
+def is_large_file(soup, max_size_mb=5):
+    content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
+    if content_length:
+        file_size = int(content_length["content"]) / (1024 * 1024) # transform to MB
+        return file_size > max_size_mb
+    return False
+
+
+
 def get_no_stop_words(page_text: str):
     stop_words_file = "stopword.txt"
     stop_words = load_stop_words(stop_words_file)
@@ -66,15 +83,16 @@ def extract_next_links(url, resp):
     hyperlinks = []
     if resp.status == 200:
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
-        a_tags = soup.findAll("a")
-        for link in a_tags:
-            content = link.get("href")
-            if content:
-                content = content.strip()
-            else:
-                continue
-            if "https" in content or "http" in content:
-                hyperlinks.append(content)
+        if not is_large_file(soup) and is_page_informative(soup):
+            a_tags = soup.findAll("a")
+            for link in a_tags:
+                content = link.get("href")
+                if content:
+                    content = content.strip()
+                else:
+                    continue
+                if "https" in content or "http" in content:
+                    hyperlinks.append(content)
     return hyperlinks
 
     # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
