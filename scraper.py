@@ -15,8 +15,6 @@ def scraper(url, resp):
             valid_links.append(link)
     save_all_valid_urls.close()
     return valid_links
-<<<<<<< HEAD
-=======
 
 
 def load_stop_words(file_path):
@@ -52,7 +50,6 @@ def decode_html(html_string):
 
     return converted.unicode_markup
 
->>>>>>> refs/remotes/origin/master
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -79,7 +76,7 @@ def extract_next_links(url, resp):
             if "https" in content or "http" in content:
                 hyperlinks.append(content)
     return hyperlinks
-=======
+
     # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
 
     debug = True
@@ -106,7 +103,7 @@ def extract_next_links(url, resp):
 
     return hyperlinks
 
->>>>>>> refs/remotes/origin/master
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
