@@ -1,10 +1,11 @@
+#Find all # that in urls in url.txt
 def url_without_fragment(url):
     sign = url.find("#")
     if sign == -1:
         return url
     return url[: sign]
 
-
+#delete all # in the urls.txt
 def read_delete_fragment(path="urls.txt"):
     result = set()
     with open(path, "r") as fr:

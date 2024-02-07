@@ -1,6 +1,9 @@
 import re
+from lxml import html
+from bs4 import UnicodeDammit, BeautifulSoup
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -12,6 +15,44 @@ def scraper(url, resp):
             valid_links.append(link)
     save_all_valid_urls.close()
     return valid_links
+<<<<<<< HEAD
+=======
+
+
+def load_stop_words(file_path):
+    with open(file_path, 'r') as file:
+        stop_words = set(file.read().strip().split('\n'))
+    return stop_words
+
+
+def get_no_stop_words(page_text: str):
+    stop_words_file = "stopword.txt"
+    stop_words = load_stop_words(stop_words_file)
+    words = page_text.split()
+
+    filtered_text = ' '.join([word for word in words if word.lower() not in stop_words])
+
+    return filtered_text
+
+
+def decode_html(html_string):
+    """
+    Uses Beautiful Soup to detect encoding.
+    
+    Returns Unicode string if successful
+
+    Code taken from lxml docs at the website below:
+    https://lxml.de/elementsoup.html#:~:text=(tag_soup)-,Using%20only%20the%20encoding%20detection,-Even%20if%20you
+    """
+    converted = UnicodeDammit(html_string)
+    if not converted.unicode_markup:
+        raise UnicodeDecodeError(
+            "Failed to detect encoding, tried [%s]",
+            ', '.join(converted.tried_encodings))
+
+    return converted.unicode_markup
+
+>>>>>>> refs/remotes/origin/master
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -22,6 +63,7 @@ def extract_next_links(url, resp):
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
+
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     # <a href="https://xxxx"></a>
     hyperlinks = []
@@ -37,6 +79,34 @@ def extract_next_links(url, resp):
             if "https" in content or "http" in content:
                 hyperlinks.append(content)
     return hyperlinks
+=======
+    # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
+
+    debug = True
+
+    hyperlinks = []
+
+    if (resp.status != 200):
+        return list()
+
+    soup = BeautifulSoup(resp.raw_response.content, "lxml")
+
+    # text = soup.get_text(separator=' ', strip=True)
+    # get_no_stop_words(text)
+
+    a_tags = soup.findAll("a")
+    for link in a_tags:
+        content = link.get("href")
+        if content:
+            content = content.strip()
+        else:
+            continue
+        if "https" in content or "http" in content:
+            hyperlinks.append(content)
+
+    return hyperlinks
+
+>>>>>>> refs/remotes/origin/master
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
