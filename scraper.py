@@ -62,6 +62,13 @@ def has_no_page_data(soup_text: str) -> bool:
     return len(soup_text) == 0
 
 
+def has_repeating_dir(url: str):
+    parsed = urlparse(url)
+    split_dirs = parsed.path.split("/")
+
+    return len(set(split_dirs)) != len(split_dirs)
+
+
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
@@ -100,7 +107,7 @@ def extract_next_links(url, resp):
         else:
             continue
         # TODO: in the below if check, use is_valid
-        if is_valid(url):
+        if is_valid(url) and not has_repeating_dir(url):
             hyperlinks.append(content)
 
     return hyperlinks
@@ -131,6 +138,9 @@ def is_valid(url):
 
         # TODO: see if you need to check for parsed.query bc of urls like
         # "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
+    
+        # TODO: .r files
+        # "http://www.ics.uci.edu/~yamingy/bayesD_demo3.r"
 
     except TypeError:
         print ("TypeError for ", parsed)
@@ -150,12 +160,19 @@ if __name__ == '__main__':
 
     test_url = "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
     # test_url = "http://sli.ics.uci.edu/Classes/2015W-273a"
-    print(urlparse(test_url))
-    print(is_valid(test_url))
+    print("Split url:", urlparse(test_url))
+    print()
+    print("Is valid URL:", is_valid(test_url))
+    print()
 
     resp = download(test_url, config)
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
     text = soup.get_text(separator=' ', strip=True)
 
-    print(resp.status != 200)
-    print(text)
+    links = extract_next_links(test_url, resp)
+    print(links)
+    print()
+
+    print("status is not 200?", resp.status != 200)
+    print()
+    print("text of page:", text)
