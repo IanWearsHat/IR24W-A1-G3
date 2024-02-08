@@ -1,25 +1,56 @@
+import logging
 import re
-from lxml import html
-from bs4 import UnicodeDammit, BeautifulSoup
-from urllib.parse import urlparse
+from bs4 import BeautifulSoup, UnicodeDammit
+from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
+import urllib.robotparser
+from urllib.error import URLError
+import hashlib
 
+def scraper(url, resp, depth=0, max_depth=3):
+    # if not is_crawl_allowed(url):
+    #     print(f"Crawling disallowed by robots.txt: {url}")
+    #     return []
+    if depth > max_depth:
+        return []
 
-def scraper(url, resp):
     links = extract_next_links(url, resp)
     valid_links = []
-    save_all_valid_urls = open("urls.txt", "a")
-    for link in links:
-        if is_valid(link):
-            save_all_valid_urls.write(link + "\n")
-            valid_links.append(link)
-    save_all_valid_urls.close()
+    with open("urls.txt", "a") as save_all_valid_urls:
+        for link in links:
+            if is_valid(link):
+                save_all_valid_urls.write(link + "\n")
+                valid_links.append(link)
     return valid_links
+
+def normalize_url(url):
+    parsed_url = urlparse(url)
+    query = parse_qs(parsed_url.query)
+    filtered_query = {k: v for k, v in query.items() if k not in ['sessionid', 'tracking']}
+    normalized_url = parsed_url._replace(query=urlencode(filtered_query, doseq=True))
+    return urlunparse(normalized_url)
 
 
 def load_stop_words(file_path):
     with open(file_path, 'r') as file:
         stop_words = set(file.read().strip().split('\n'))
     return stop_words
+
+
+def is_page_informative(page, max_words = 100):
+    text_content = page.get_text().strip() # get text from page and remove ending space
+    text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
+    tokens = re.findall(r'\w+', text_content, re.IGNORECASE) # get token
+    if len(tokens) > max_words:
+        return True
+    return False
+
+
+def is_large_file(soup, max_size_mb=5):
+    content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
+    if content_length:
+        file_size = int(content_length["content"]) / (1024 * 1024) # transform to MB
+        return file_size > max_size_mb
+    return False
 
 
 def get_no_stop_words(page_text: str):
@@ -33,20 +64,9 @@ def get_no_stop_words(page_text: str):
 
 
 def decode_html(html_string):
-    """
-    Uses Beautiful Soup to detect encoding.
-    
-    Returns Unicode string if successful
-
-    Code taken from lxml docs at the website below:
-    https://lxml.de/elementsoup.html#:~:text=(tag_soup)-,Using%20only%20the%20encoding%20detection,-Even%20if%20you
-    """
     converted = UnicodeDammit(html_string)
     if not converted.unicode_markup:
-        raise UnicodeDecodeError(
-            "Failed to detect encoding, tried [%s]",
-            ', '.join(converted.tried_encodings))
-
+        raise UnicodeDecodeError("Failed to detect encoding, tried [%s]" % ', '.join(converted.tried_encodings))
     return converted.unicode_markup
 
 
@@ -70,17 +90,6 @@ def has_repeating_dir(url: str):
 
 
 def extract_next_links(url, resp):
-    # Implementation required.
-    # url: the URL that was used to get the page
-    # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    # resp.error: when status is not 200, you can check the error here, if needed.
-    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
-    #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
-
-    # TODO: look at robots.txt for sites and see if it's even required to check robots.txt
     debug = True
 
     hyperlinks = []
@@ -95,22 +104,42 @@ def extract_next_links(url, resp):
     # TODO: maybe have all trap checks in one function
     if has_no_page_data(text):
         return list()
+
+    if not is_large_file(soup) and is_page_informative(soup):
+        a_tags = soup.findAll("a")
+        for link in a_tags:
+            content = link.get("href")
+            if content:
+                content = content.strip()
+            else:
+                continue
+            # TODO: in the below if check, use is_valid
+            if is_valid(url) and not has_repeating_dir(url):
+                hyperlinks.append(content)
     
-    # example use for get_no_stop_words
-    # get_no_stop_words(text)
-
-    a_tags = soup.findAll("a")
-    for link in a_tags:
-        content = link.get("href")
-        if content:
-            content = content.strip()
-        else:
-            continue
-        # TODO: in the below if check, use is_valid
-        if is_valid(url) and not has_repeating_dir(url):
-            hyperlinks.append(content)
-
     return hyperlinks
+
+
+historytrap = set()
+def add_history(url):
+    historytrap.add(url)
+
+
+def is_page_informative(page, max_words = 100):
+    text_content = page.get_text().strip() # get text from page and remove ending space
+    text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
+    tokens = re.findall(r'\w+', text_content, re.IGNORECASE) # get token
+    if len(tokens) > max_words:
+        return True
+    return False
+
+
+def is_large_file(soup, max_size_mb=5):
+    content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
+    if content_length:
+        file_size = int(content_length["content"]) / (1024 * 1024) # transform to MB
+        return file_size > max_size_mb
+    return False
 
 
 def is_allowed_domain(netloc: str):
@@ -124,37 +153,65 @@ def is_allowed_domain(netloc: str):
 
 
 def is_valid(url):
-    # Decide whether to crawl this url or not. 
-    # If you decide to crawl it, return True; otherwise return False.
-    # There are already some conditions that return False.
-    try:
-        parsed = urlparse(url)
-
-        if parsed.scheme not in set(["http", "https"]):
-            return False
-
-        if not is_allowed_domain(parsed.netloc):
-            return False
-
-        return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
-
-        # TODO: see if you need to check for parsed.query bc of urls like
-        # "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
+    if url in historytrap:
+        print("HERE ", url)
+        return False
+    key = True
+    # Parse the URL into components.
+    parsed = urlparse(url)
     
-        # TODO: .r files
-        # "http://www.ics.uci.edu/~yamingy/bayesD_demo3.r"
+    # Parse the query parameters from the URL
+    params = parse_qs(parsed.query)
+    # Construct base URL without query parameters.
+    base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
 
+    # # Check for increasing sequence in the parameters which might indicate a trap.
+    # for param, values in params.items():
+    #     for value in values:
+    #         if self.is_increasing_sequence(base_url, param, value):
+    #             # Detected a potential trap based on parameter sequence.
+    #             return False
+
+    # Check if the URL's scheme is either HTTP or HTTPS. Invalidate otherwise.
+    if parsed.scheme not in set(["http", "https"]):
+        key = False
+
+    if not is_allowed_domain(parsed.netloc):
+        return False
+
+    try:
+        if re.search(r'\/\d{4}\/\d{2}\/\d{2}\/|\/\d{4}\/\d{2}\/', parsed.path.lower()):
+            key=False
+        
+        if re.search(r"\.(css|js|bmp|gif|jpeg|jpg|ico|png|tiff|mid|mp2|mp3|mp4"
+                        r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+                        r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1"
+                        r"|thmx|mso|arff|rtf|jar|csv"
+                        r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
+            valid = False
     except TypeError:
-        print ("TypeError for ", parsed)
-        raise
+        print("TypeError for ", parsed)
+        key = False
+
+    # Invalidate URLs that are unusually long (over 200 characters).
+    if len(url) > 200:
+        key = False
+
+    # # Invalidate URLs where a single path segment is repeated (a common trap pattern).
+    # path_segments = parsed.path.split('/')
+    # if any(path_segments.count(segment) > 1 for segment in path_segments):
+    #     valid = False
+
+    # Invalidate URLs with too many query parameters, potentially indicating a trap.
+    if len(parsed.query.split('&')) > 10:
+        key = False
+
+
+    # If the URL is found to be invalid, update the trap counter.
+    if not key:
+        add_history(url)
+
+    return key
 
 
 if __name__ == '__main__':
