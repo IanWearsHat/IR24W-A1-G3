@@ -168,17 +168,24 @@ if __name__ == '__main__':
     config = Config(cparser)
     config.cache_server = get_cache_server(config, False)
 
-    test_url = "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
+    # test_url = "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
     # test_url = "http://sli.ics.uci.edu/Classes/2015W-273a"
+    # test_url = "https://wics.ics.uci.edu/annual-mentorship-program-2013/"
+    test_url = "http://evoke.ics.uci.edu"
+    test_url = "https://www.ics.uci.edu/faculty/profiles/view_faculty.php?ucinetid=klefstad"
     print("Split url:", urlparse(test_url))
     print()
     print("Is valid URL:", is_valid(test_url))
     print()
 
     resp = download(test_url, config)
+
+    print("status:", resp.status)
+    print()
+
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
     text = soup.get_text(separator=' ', strip=True)
-
+    
     links = extract_next_links(test_url, resp)
     print(links)
     print()
