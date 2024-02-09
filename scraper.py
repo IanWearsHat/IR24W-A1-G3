@@ -177,7 +177,7 @@ def is_valid(url):
         key = False
 
     if not is_allowed_domain(parsed.netloc):
-        return False
+        key = False
 
     try:
         if re.search(r'\/\d{4}\/\d{2}\/\d{2}\/|\/\d{4}\/\d{2}\/', parsed.path.lower()):
@@ -185,10 +185,22 @@ def is_valid(url):
         
         if re.search(r"\.(css|js|bmp|gif|jpeg|jpg|ico|png|tiff|mid|mp2|mp3|mp4"
                         r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-                        r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1"
-                        r"|thmx|mso|arff|rtf|jar|csv"
-                        r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
-            valid = False
+                        r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat"
+                        r"|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1"
+                        r"|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz"
+                        r"|a|asm|asp|awk|wk|bat|bmp|btm|BTM|c|class|cmd|CPP|csv|cur"
+                        r"|cxx|CXX|db|def|DES|dlg|dll|don|dpc|dpj|dtd|dump|dxp|eng|exe"
+                        r"|flt|fmt|font|fp|ft|gif|h|H|hdb |edabu|hdl |hid|hpp |hrc|src"
+                        r"|HRC|src|html|hxx|Hxx|HXX|ico|idl |IDL|ih|ilb|inc|inf|ini|inl"
+                        r"|ins|java|jar|jnl|jpg|js|jsp|kdelnk|l|lgt|lib|lin|ll|LN3|lng"
+                        r"|lnk|lnx|LOG|lst|olver|.lst|lst|olenv|mac|MacOS|map|mk|make"
+                        r"|MK|make|mod|NT2|o|obj|par|pfa|pfb|pl|PL|plc|pld|PLD|plf|pm"
+                        r"|pmk|pre|cpcomp|PRJ|prt|PS|ptr|r|rc|make|rdb |res|s|S|sbl"
+                        r"|scp|scr|sda|sdb|sdc|sdd|sdg|sdm|sds|sdv|sdw|sdi|seg|SEG"
+                        r"|Set|sgl|sh|sid|smf|sms|so|sob|soh|sob|soc|sod|soe|sog|soh"
+                        r"|src|srs|SSLeay|Static|tab|TFM|thm|tpt|tsc|ttf|TTF|txt|TXT"
+                        r"|unx|UNX|urd|url|VMS|vor|W32|wav|wmf|xml|xpm|xrb|y|yxx|zip|)$", parsed.path.lower()):
+            key = False
     except TypeError:
         print("TypeError for ", parsed)
         key = False
