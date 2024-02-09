@@ -5,6 +5,7 @@ from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 import urllib.robotparser
 from urllib.error import URLError
 import hashlib
+from utils.deliverable_helpers import LongestPageHelper
 
 def scraper(url, resp, depth=0, max_depth=3):
     # if not is_crawl_allowed(url):
@@ -106,6 +107,9 @@ def extract_next_links(url, resp):
         return list()
 
     if not is_large_file(soup) and is_page_informative(soup):
+
+        LongestPageHelper.update_longest_page(url, text)
+
         a_tags = soup.findAll("a")
         for link in a_tags:
             content = link.get("href")
