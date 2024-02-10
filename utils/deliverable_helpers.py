@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+from urllib.robotparser import RobotFileParser
 
 class LongestPageHelper:
     longest_page_and_count = {
@@ -9,7 +10,6 @@ class LongestPageHelper:
     @classmethod
     def update_longest_page(cls, url: str, text: str) -> None:
         """Updates the longest page dict if the input text word count is longer"""
-
         text_length = LongestPageHelper.longest_page_and_count["text_length"]
         word_count = len(text.split())
         if word_count > text_length:
@@ -81,4 +81,9 @@ class SubdomainCountHelper:
 
 
 if __name__ == "__main__":
-    SubdomainCountHelper.create_sorted_subdomain_file("urls.txt")
+    # SubdomainCountHelper.create_sorted_subdomain_file("urls.txt")
+
+    rp = RobotFileParser()
+    rp.set_url("https://en.wikipedia.org/robots.txt")
+    rp.read()
+    print(rp.can_fetch("*", "https://en.wikipedia.org/wiki/Main_Page"))
