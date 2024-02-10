@@ -6,8 +6,11 @@ from utils.deliverable_helpers import LongestPageHelper
 from generate_unique_without_fragments import url_without_fragment
 from cos_sim import compute_cosine_similarity
 
+# For cosine similarity, but cosine similarity takes a bit too long
+# so these remain unused
 unique_urls = set()
 unique_contents = []
+
 
 def scraper(url, resp, depth=0, max_depth=3):
     # if not is_crawl_allowed(url):
@@ -25,6 +28,7 @@ def scraper(url, resp, depth=0, max_depth=3):
                 valid_links.append(link)
     return valid_links
 
+# TODO: remove this at meeting
 def normalize_url(url):
     parsed_url = urlparse(url)
     query = parse_qs(parsed_url.query)
@@ -102,6 +106,9 @@ def extract_next_links(url, resp):
 
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     # <a href="https://xxxx"></a>
+
+    # Cosine Similarity code that takes a bit too long
+    """
     hyperlinks = []
     if resp.status == 200:
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
@@ -117,6 +124,7 @@ def extract_next_links(url, resp):
                     continue
                 if "https" in content or "http" in content:
                     url = url_without_fragment(content)
+                    
                     # url_contents = soup.get_text().strip()
                     # is_similar = False
                     # for content in url_contents:
@@ -130,18 +138,15 @@ def extract_next_links(url, resp):
                     hyperlinks.append(url)
                     # unique_contents.append(url_contents)
     return hyperlinks
+    """
 
     # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
-
-    debug = True
-
     hyperlinks = []
 
     if (resp.status != 200):
         return list()
 
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
-
     text = soup.get_text(separator=' ', strip=True)
 
     # TODO: maybe have all trap checks in one function
@@ -154,14 +159,15 @@ def extract_next_links(url, resp):
 
         a_tags = soup.findAll("a")
         for link in a_tags:
-            content = link.get("href")
-            if content:
-                content = content.strip()
+            link_url = link.get("href")
+            if link_url:
+                link_url = link_url.strip()
+                link_url = url_without_fragment(link_url)
             else:
                 continue
-            # TODO: in the below if check, use is_valid
-            if is_valid(url) and not has_repeating_dir(url):
-                hyperlinks.append(content)
+
+            if is_valid(link_url) and not has_repeating_dir(link_url):
+                hyperlinks.append(link_url)
     
     return hyperlinks
 
