@@ -3,7 +3,11 @@ from lxml import html
 from bs4 import UnicodeDammit, BeautifulSoup
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from generate_unique_without_fragments import url_without_fragment
+from cos_sim import compute_cosine_similarity
 
+unique_urls = set()
+unique_contents = []
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -44,9 +48,7 @@ def get_no_stop_words(page_text: str):
     stop_words_file = "stopword.txt"
     stop_words = load_stop_words(stop_words_file)
     words = page_text.split()
-
     filtered_text = ' '.join([word for word in words if word.lower() not in stop_words])
-
     return filtered_text
 
 
@@ -91,8 +93,22 @@ def extract_next_links(url, resp):
                     content = content.strip()
                 else:
                     continue
+                if content in unique_urls:
+                    continue
                 if "https" in content or "http" in content:
-                    hyperlinks.append(content)
+                    url = url_without_fragment(content)
+                    # url_contents = soup.get_text().strip()
+                    # is_similar = False
+                    # for content in url_contents:
+                    #     sim = compute_cosine_similarity(content, url_contents)
+                    #     if sim > 0.9:
+                    #         is_similar = True
+                    #         break
+                    # if is_similar:
+                    #     continue
+                    unique_urls.add(url)
+                    hyperlinks.append(url)
+                    # unique_contents.append(url_contents)
     return hyperlinks
 
     # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content

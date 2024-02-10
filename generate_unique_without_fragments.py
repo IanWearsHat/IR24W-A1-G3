@@ -1,9 +1,9 @@
 #Find all # that in urls in url.txt
 def url_without_fragment(url):
-    sign = url.find("#")
-    if sign == -1:
+    sign = url.find("#") # find the index of #
+    if sign == -1: # if the return value is -1 it means no #
         return url
-    return url[: sign]
+    return url[: sign] # return the slice of url from 0 to sign
 
 #delete all # in the urls.txt
 def read_delete_fragment(path="urls.txt"):
