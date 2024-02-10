@@ -3,6 +3,7 @@ from threading import Thread
 from inspect import getsource
 from utils.download import download
 from utils import get_logger
+from utils.deliverable_helpers import LongestPageHelper
 import scraper
 import time
 
@@ -22,6 +23,7 @@ class Worker(Thread):
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
+                LongestPageHelper.create_longest_page_file()
                 break
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(

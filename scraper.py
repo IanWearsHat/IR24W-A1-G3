@@ -191,7 +191,7 @@ def is_valid(url):
                         r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
                         r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat"
                         r"|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1"
-                        r"|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz"
+                        r"|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz|bib"
                         r"|a|asm|asp|awk|wk|bat|bmp|btm|BTM|c|class|cmd|CPP|csv|cur"
                         r"|cxx|CXX|db|def|DES|dlg|dll|don|dpc|dpj|dtd|dump|dxp|eng|exe"
                         r"|flt|fmt|font|fp|ft|gif|h|H|hdb |edabu|hdl |hid|hpp |hrc|src"
