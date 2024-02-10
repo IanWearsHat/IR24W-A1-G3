@@ -1,11 +1,13 @@
-import logging
 import re
 from bs4 import BeautifulSoup, UnicodeDammit
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
-import urllib.robotparser
-from urllib.error import URLError
-import hashlib
+
 from utils.deliverable_helpers import LongestPageHelper
+from generate_unique_without_fragments import url_without_fragment
+from cos_sim import compute_cosine_similarity
+
+unique_urls = set()
+unique_contents = []
 
 def scraper(url, resp, depth=0, max_depth=3):
     # if not is_crawl_allowed(url):
@@ -58,9 +60,7 @@ def get_no_stop_words(page_text: str):
     stop_words_file = "stopword.txt"
     stop_words = load_stop_words(stop_words_file)
     words = page_text.split()
-
     filtered_text = ' '.join([word for word in words if word.lower() not in stop_words])
-
     return filtered_text
 
 
@@ -91,6 +91,48 @@ def has_repeating_dir(url: str):
 
 
 def extract_next_links(url, resp):
+    # Implementation required.
+    # url: the URL that was used to get the page
+    # resp.url: the actual url of the page
+    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+    # resp.error: when status is not 200, you can check the error here, if needed.
+    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
+    #         resp.raw_response.url: the url, again
+    #         resp.raw_response.content: the content of the page!
+
+    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+    # <a href="https://xxxx"></a>
+    hyperlinks = []
+    if resp.status == 200:
+        soup = BeautifulSoup(resp.raw_response.content, "lxml")
+        if not is_large_file(soup) and is_page_informative(soup):
+            a_tags = soup.findAll("a")
+            for link in a_tags:
+                content = link.get("href")
+                if content:
+                    content = content.strip()
+                else:
+                    continue
+                if content in unique_urls:
+                    continue
+                if "https" in content or "http" in content:
+                    url = url_without_fragment(content)
+                    # url_contents = soup.get_text().strip()
+                    # is_similar = False
+                    # for content in url_contents:
+                    #     sim = compute_cosine_similarity(content, url_contents)
+                    #     if sim > 0.9:
+                    #         is_similar = True
+                    #         break
+                    # if is_similar:
+                    #     continue
+                    unique_urls.add(url)
+                    hyperlinks.append(url)
+                    # unique_contents.append(url_contents)
+    return hyperlinks
+
+    # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
+
     debug = True
 
     hyperlinks = []
