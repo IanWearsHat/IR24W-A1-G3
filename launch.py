@@ -1,6 +1,7 @@
 from configparser import ConfigParser
 from argparse import ArgumentParser
 
+from utils.deliverable_helpers import LongestPageHelper
 from utils.server_registration import get_cache_server
 from utils.config import Config
 from crawler import Crawler
@@ -20,4 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--restart", action="store_true", default=False)
     parser.add_argument("--config_file", type=str, default="config.ini")
     args = parser.parse_args()
-    main(args.config_file, args.restart)
+    try:
+        main(args.config_file, args.restart)
+    except KeyboardInterrupt:
+        LongestPageHelper.create_longest_page_file()

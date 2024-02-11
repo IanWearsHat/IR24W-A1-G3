@@ -1,5 +1,5 @@
 from urllib.robotparser import RobotFileParser
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 import requests
 import socket
@@ -90,10 +90,28 @@ if __name__ == "__main__":
     #     print(rh.can_fetch("https://www.informatics.uci.edu/support/champion-research") == True)
     # else:
     #     print("doesnt exist")
-    rh = RobotsHelper("https://wics.ics.uci.edu")
-    rh.read_robots_url()
-    import datetime
-    p = datetime.datetime.now()
-    print(rh.get_links_from_sitemap())
-    print(datetime.datetime.now() - p)
-    print(rh.get_links_from_sitemap())
+    # rh = RobotsHelper("https://wics.ics.uci.edu")
+    # rh.read_robots_url()
+    # import datetime
+    # p = datetime.datetime.now()
+    # print(rh.get_links_from_sitemap())
+    # print(datetime.datetime.now() - p)
+    # print(rh.get_links_from_sitemap())
+
+    url1 = "https://ics.uci.edu/happening/news/?filter%5Bunits%5D=69&filter%5Baffiliation_posts%5D=1990&filter%5Bpartnerships_posts%5D=2002"
+    url2 = "https://ics.uci.edu/happening/news/?filter%5Bunits%5D=69&filter%5Baffiliation_posts%5D=1990&filter%5Bpartnerships_posts%5D%5B1%5D=2001"
+
+    # url1 = "https://isg.ics.uci.edu/publications/?limit=4&"
+    # url2 = "https://isg.ics.uci.edu/publications/?limit=3&"
+    url2 = "https://ics.uci.edu/happening/news/?filter%5Bunits%5D=69&filter%5Baffiliation_posts%5D=1990&filter%5Bpartnerships_posts%5D%5B214%5D=2002&filter%5Bpartnerships_posts%5D%5B215%5D=2001"
+
+    query1 = urlparse(url1).query
+    query2 = urlparse(url2).query
+    from difflib import SequenceMatcher
+
+    def similar(a, b):
+        return SequenceMatcher(None, a, b).ratio()
+    print(len(query1))
+    print(len(query2))
+    # print(similar(query1, query2))
+    print(len(parse_qs(url1)))

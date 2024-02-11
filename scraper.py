@@ -22,7 +22,7 @@ def scraper(url, resp, depth=0, max_depth=3):
 
     links = extract_next_links(url, resp)
     valid_links = []
-    with open("urls.txt", "a") as save_all_valid_urls:
+    with open("urls.txt", "w") as save_all_valid_urls:
         for link in links:
             if is_valid(link):
                 save_all_valid_urls.write(link + "\n")
@@ -222,6 +222,9 @@ def is_valid(url):
     key = True
     # Parse the URL into components.
     parsed = urlparse(url)
+
+    if "ical" in parsed.query or "facebook" in parsed.query or "twitter" in parsed.query:
+        key = False
     
     # Parse the query parameters from the URL
     params = parse_qs(parsed.query)
@@ -243,26 +246,27 @@ def is_valid(url):
         key = False
 
     try:
-        if re.search(r'\/\d{4}\/\d{2}\/\d{2}\/|\/\d{4}\/\d{2}\/', parsed.path.lower()):
+        if re.search(r'\/\d{4}[-\/]\d{2}[-\/]\d{2}\/|\/\d{4}[-\/]\d{2}\/', parsed.path.lower()):
             key=False
         
-        if re.search(r"\.(css|js|bmp|gif|jpeg|jpg|ico|png|tiff|mid|mp2|mp3|mp4"
-                        r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-                        r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat"
-                        r"|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1"
-                        r"|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz|bib"
-                        r"|a|asm|asp|awk|wk|bat|bmp|btm|BTM|c|class|cmd|CPP|csv|cur"
-                        r"|cxx|CXX|db|def|DES|dlg|dll|don|dpc|dpj|dtd|dump|dxp|eng|exe"
-                        r"|flt|fmt|font|fp|ft|gif|h|H|hdb |edabu|hdl |hid|hpp |hrc|src"
-                        r"|HRC|src|html|hxx|Hxx|HXX|ico|idl |IDL|ih|ilb|inc|inf|ini|inl"
-                        r"|ins|java|jar|jnl|jpg|js|jsp|kdelnk|l|lgt|lib|lin|ll|LN3|lng"
-                        r"|lnk|lnx|LOG|lst|olver|.lst|lst|olenv|m|mac|MacOS|map|mk|make"
-                        r"|MK|make|mod|NT2|o|obj|par|pfa|pfb|pl|PL|plc|pld|PLD|plf|pm"
-                        r"|pmk|pre|cpcomp|PRJ|prt|PS|ptr|r|rc|make|rdb |res|s|S|sbl"
-                        r"|scp|scr|sda|sdb|sdc|sdd|sdg|sdm|sds|sdv|sdw|sdi|seg|SEG"
-                        r"|Set|sgl|sh|sid|smf|sms|so|sob|soh|sob|soc|sod|soe|sog|soh"
-                        r"|src|srs|SSLeay|Static|tab|TFM|thm|tpt|tsc|ttf|TTF|txt|TXT"
-                        r"|unx|UNX|urd|url|VMS|vor|W32|wav|wmf|xml|xpm|xrb|y|yxx|zip|)$", parsed.path.lower()):
+        file_filter = r"\.(css|js|bmp|gif|jpeg|jpg|ico|png|tiff|mid|mp2|mp3|mp4" \
+                        r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
+                        r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat" \
+                        r"|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
+                        r"|thmx|mso|arff|rtf|jar|csv|rm|smil|wmv|swf|wma|zip|rar|gz|bib" \
+                        r"|a|asm|asp|awk|wk|bat|bmp|btm|BTM|c|class|cmd|CPP|csv|cur" \
+                        r"|cxx|CXX|db|def|DES|dlg|dll|don|dpc|dpj|dtd|dump|dxp|eng|exe" \
+                        r"|flt|fmt|font|fp|ft|gif|h|H|hdb |edabu|hdl |hid|hpp |hrc|src" \
+                        r"|HRC|src|html|hxx|Hxx|HXX|ico|idl|IDL|ih|ilb|inc|inf|ini|inl" \
+                        r"|ins|java|jar|jnl|jpg|js|jsp|kdelnk|l|lgt|lib|lin|ll|LN3|lng" \
+                        r"|lnk|lnx|LOG|lst|olver|.lst|lst|olenv|m|mac|MacOS|map|mk|make" \
+                        r"|MK|make|mod|NT2|o|obj|par|pfa|pfb|pl|PL|plc|pld|PLD|plf|pm" \
+                        r"|pmk|pre|cpcomp|PRJ|prt|PS|ptr|r|rc|make|rdb |res|s|S|sbl" \
+                        r"|scp|scr|sda|sdb|sdc|sdd|sdg|sdm|sds|sdv|sdw|sdi|seg|SEG" \
+                        r"|Set|sgl|sh|sid|smf|sms|so|sob|soh|sob|soc|sod|soe|sog|soh" \
+                        r"|src|srs|SSLeay|Static|tab|tex|TFM|thm|tpt|tsc|ttf|TTF|txt|TXT" \
+                        r"|unx|UNX|urd|url|VMS|vor|W32|wav|wmf|xml|xpm|xrb|y|yxx|zip|)$"
+        if re.search(file_filter, parsed.path.lower()) or re.search(file_filter, parsed.query):
             key = False
     except TypeError:
         print("TypeError for ", parsed)
@@ -278,9 +282,10 @@ def is_valid(url):
     #     valid = False
 
     # Invalidate URLs with too many query parameters, potentially indicating a trap.
-    if len(parsed.query.split('&')) > 10:
+    # Checking logs shows that the only pages with at least 2 query parameters
+    # are calendar or dynamic query traps
+    if len(parse_qs(url)) >= 2:
         key = False
-
 
     # If the URL is found to be invalid, update the trap counter.
     if not key:
@@ -305,8 +310,8 @@ if __name__ == '__main__':
     # test_url = "https://wics.ics.uci.edu/annual-mentorship-program-2013/"
     test_url = "http://evoke.ics.uci.edu"
     test_url = "https://www.ics.uci.edu/faculty/profiles/view_faculty.php?ucinetid=klefstad"
-    test_url = "https://www.stat.uci.edu"
-    test_url = "https://www.stat.uci.edu/employers-of-statistics-grad-students/"
+    # test_url = "https://www.stat.uci.edu"
+    # test_url = "https://www.stat.uci.edu/employers-of-statistics-grad-students/"
     print("Split url:", urlparse(test_url))
     print()
     print("Is valid URL:", is_valid(test_url))
