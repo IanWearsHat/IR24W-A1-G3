@@ -5,7 +5,7 @@ from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 from utils.deliverable_helpers import LongestPageHelper
 from generate_unique_without_fragments import url_without_fragment
 from cos_sim import compute_cosine_similarity
-from utils.robots_helper import RobotsHelper
+from utils.robots_helper import RobotsHelperFactory
 
 # For cosine similarity, but cosine similarity takes a bit too long
 # so these remain unused
@@ -147,8 +147,7 @@ def extract_next_links(url, resp):
     if (resp.status != 200):
         return list()
     
-    rh = RobotsHelper(url)
-    can_use_robots_file = rh.robots_file_exists and rh.has_read_robots_url()
+    rh, can_read_robots = RobotsHelperFactory.get_helper(url)
 
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
     text = soup.get_text(separator=' ', strip=True)
@@ -161,9 +160,12 @@ def extract_next_links(url, resp):
 
         LongestPageHelper.update_longest_page(url, text)
 
-        a_tags = soup.findAll("a")
-        for link in a_tags:
-            link_url = link.get("href")
+        links = [link.get("href") for link in soup.findAll("a")]
+        if can_read_robots:
+            for link in rh.get_links_from_sitemap():
+                links.append(link)
+
+        for link_url in links:
             if link_url:
                 link_url = link_url.strip()
                 link_url = url_without_fragment(link_url)
@@ -172,7 +174,7 @@ def extract_next_links(url, resp):
 
             if is_valid(link_url) and not has_repeating_dir(link_url):
 
-                if can_use_robots_file:
+                if can_read_robots:
                     if rh.can_fetch(link_url):
                         hyperlinks.append(link_url)
                 else:
