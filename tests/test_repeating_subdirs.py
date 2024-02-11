@@ -30,3 +30,9 @@ class TestRepeatingSubdirs(TestCase):
                 test_url += subdir + '/'
 
         assert has_repeating_dir(test_url) == True
+    
+    def test_has_no_repeats(self):
+        test_url = self.base_url
+        test_url += "bruh/"
+
+        assert has_repeating_dir(test_url) == False

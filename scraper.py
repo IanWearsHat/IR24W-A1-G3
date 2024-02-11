@@ -89,7 +89,7 @@ def has_no_page_data(soup_text: str) -> bool:
 
 def has_repeating_dir(url: str):
     parsed = urlparse(url)
-    split_dirs = parsed.path.split("/")
+    split_dirs = [i for i in parsed.path.split("/") if i != '']
 
     return len(set(split_dirs)) != len(split_dirs)
 
@@ -294,9 +294,13 @@ if __name__ == '__main__':
     # test_url = "https://wics.ics.uci.edu/annual-mentorship-program-2013/"
     test_url = "http://evoke.ics.uci.edu"
     test_url = "https://www.ics.uci.edu/faculty/profiles/view_faculty.php?ucinetid=klefstad"
+    test_url = "https://www.stat.uci.edu"
+    test_url = "https://www.stat.uci.edu/employers-of-statistics-grad-students/"
     print("Split url:", urlparse(test_url))
     print()
     print("Is valid URL:", is_valid(test_url))
+    print()
+    print("is repeating:", has_repeating_dir(test_url))
     print()
 
     resp = download(test_url, config)
