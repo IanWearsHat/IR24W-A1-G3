@@ -13,21 +13,37 @@ unique_urls = set()
 unique_contents = []
 
 
-def scraper(url, resp, depth=0, max_depth=3):
+def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
     # if not is_crawl_allowed(url):
     #     print(f"Crawling disallowed by robots.txt: {url}")
-    #     return []
     if depth > max_depth:
-        return []
+        return [],collected_texts
+    links, text_content = extract_next_links(url, resp)
+    filtered_text = get_no_stop_words(text_content)
+    collected_texts.append(filtered_text)
+    most_common_50 = get_50_most_common_words(collected_texts)
 
-    links = extract_next_links(url, resp)
+    # Print the 50 most common words with their frequencies
+    print("The 50 most common words are:")
+    for word, freq in most_common_50:
+        print(f"{word}: {freq}")
+    # print("check content ",collected_texts)
+    
     valid_links = []
     with open("urls.txt", "a") as save_all_valid_urls:
         for link in links:
             if is_valid(link):
                 save_all_valid_urls.write(link + "\n")
                 valid_links.append(link)
-    return valid_links
+    return valid_links,collected_texts
+
+from collections import Counter
+
+def get_50_most_common_words(collected_texts):
+    all_words = ' '.join(collected_texts).split()
+    word_counts = Counter(all_words)
+    most_common_50 = word_counts.most_common(50)
+    return most_common_50
 
 # TODO: remove this at meeting
 def normalize_url(url):
@@ -154,7 +170,7 @@ def extract_next_links(url, resp):
 
     # TODO: maybe have all trap checks in one function
     if has_no_page_data(text):
-        return list()
+        return hyperlinks,text
 
     if not is_large_file(soup) and is_page_informative(soup):
 
@@ -180,7 +196,7 @@ def extract_next_links(url, resp):
                 else:
                     hyperlinks.append(link_url)
 
-    return hyperlinks
+    return hyperlinks,text
 
 
 historytrap = set()
@@ -299,7 +315,18 @@ if __name__ == '__main__':
     cparser.read("config.ini")
     config = Config(cparser)
     config.cache_server = get_cache_server(config, False)
+    start_url = "https://www.ics.uci.edu/"
 
+    # Start the scraping process
+    _, collected_texts = scraper(start_url, download(start_url, config), 0, 3, [])
+
+    # After scraping is done, analyze the collected texts to find the most common words
+    most_common_50 = get_50_most_common_words(collected_texts)
+
+    # Print the 50 most common words with their frequencies
+    print("The 50 most common words are:")
+    for word, freq in most_common_50:
+        print(f"{word}: {freq}")
     # test_url = "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
     # test_url = "http://sli.ics.uci.edu/Classes/2015W-273a"
     # test_url = "https://wics.ics.uci.edu/annual-mentorship-program-2013/"
