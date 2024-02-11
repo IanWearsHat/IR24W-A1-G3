@@ -2,6 +2,10 @@ from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
 class LongestPageHelper:
+    """
+    Helper for deliverable question 2 for determining
+    the longest page in terms of word count
+    """
     longest_page_and_count = {
         "url": "",
         "text_length": -1,
@@ -36,6 +40,11 @@ class LongestPageHelper:
 
 
 class SubdomainCountHelper:
+    """
+    Helper for deliverable question 4 for counting
+    the number of subdomains, sorting the different subdomains,
+    and counting the number of pages under the subdomains
+    """
     @classmethod
     def _create_subdomain_to_page_dict(cls, urls_file_name: str) -> dict[str, set]:
         """Returns a dict where the key-value pair is url to set of paths for that url"""

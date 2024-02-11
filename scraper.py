@@ -55,6 +55,7 @@ def load_stop_words(file_path):
     return stop_words
 
 
+# This part is for detect no information 
 def is_page_informative(page, max_words = 180):
     text_content = page.get_text().strip() # get text from page and remove ending space
     text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
@@ -63,7 +64,7 @@ def is_page_informative(page, max_words = 180):
         return True
     return False
 
-
+# This is for detect and avoid very large files
 def is_large_file(soup, max_size_mb=5):
     content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
     if content_length:
@@ -88,6 +89,7 @@ def decode_html(html_string):
 
 
 def has_repeating_dir(url: str):
+    """Returns if a url has repeating directories, potentially indicating a trap"""
     parsed = urlparse(url)
     split_dirs = [i for i in parsed.path.split("/") if i != '']
 
@@ -183,24 +185,8 @@ def add_history(url):
     historytrap.add(url)
 
 
-def is_page_informative(page, max_words = 100):
-    text_content = page.get_text().strip() # get text from page and remove ending space
-    text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
-    tokens = re.findall(r'\w+', text_content, re.IGNORECASE) # get token
-    if len(tokens) > max_words:
-        return True
-    return False
-
-
-def is_large_file(soup, max_size_mb=5):
-    content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
-    if content_length:
-        file_size = int(content_length["content"]) / (1024 * 1024) # transform to MB
-        return file_size > max_size_mb
-    return False
-
-
 def is_allowed_domain(netloc: str):
+    """Restricts authority to only be in 4 domains"""
     if any(domain in netloc for domain in set([".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu"])):
         return True
     

@@ -2,6 +2,10 @@ from unittest import TestCase
 from scraper import is_allowed_domain
 
 class TestIsAllowedDomains(TestCase):
+    """
+    Tests for is_allowed_domain function to
+    ensure only 4 domains are allowed
+    """
     def test_physics_domain(self):
         test_domain = "physics.uci.edu"
 
