@@ -17,7 +17,7 @@ def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
     # if not is_crawl_allowed(url):
     #     print(f"Crawling disallowed by robots.txt: {url}")
     if depth > max_depth:
-        return [],collected_texts
+        return [], collected_texts
     links, text_content = extract_next_links(url, resp)
     filtered_text = get_no_stop_words(text_content)
     collected_texts.append(filtered_text)
@@ -45,14 +45,6 @@ def get_50_most_common_words(collected_texts):
     most_common_50 = word_counts.most_common(50)
     return most_common_50
 
-# TODO: remove this at meeting
-def normalize_url(url):
-    parsed_url = urlparse(url)
-    query = parse_qs(parsed_url.query)
-    filtered_query = {k: v for k, v in query.items() if k not in ['sessionid', 'tracking']}
-    normalized_url = parsed_url._replace(query=urlencode(filtered_query, doseq=True))
-    return urlunparse(normalized_url)
-
 
 def load_stop_words(file_path):
     with open(file_path, 'r') as file:
@@ -60,7 +52,7 @@ def load_stop_words(file_path):
     return stop_words
 
 
-def is_page_informative(page, max_words = 100):
+def is_page_informative(page, max_words = 180):
     text_content = page.get_text().strip() # get text from page and remove ending space
     text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
     tokens = re.findall(r'\w+', text_content, re.IGNORECASE) # get token
@@ -90,18 +82,6 @@ def decode_html(html_string):
     if not converted.unicode_markup:
         raise UnicodeDecodeError("Failed to detect encoding, tried [%s]" % ', '.join(converted.tried_encodings))
     return converted.unicode_markup
-
-
-# TODO: see if "no data" means like one word or something
-# ex. "http://sli.ics.uci.edu/Pubs/Pubs?action=download&upname=kdsd08.pdf"
-# gives "Forbidden" which isn't really anything
-def has_no_page_data(soup_text: str) -> bool:
-    """
-    Detect if there is any text content on the webpage.
-
-    Handles "dead URLs that return a 200 status but no data"
-    """
-    return len(soup_text) == 0
 
 
 def has_repeating_dir(url: str):
@@ -161,16 +141,12 @@ def extract_next_links(url, resp):
     hyperlinks = []
 
     if (resp.status != 200):
-        return list()
+        return list(), ""
     
     rh, can_read_robots = RobotsHelperFactory.get_helper(url)
 
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
     text = soup.get_text(separator=' ', strip=True)
-
-    # TODO: maybe have all trap checks in one function
-    if has_no_page_data(text):
-        return hyperlinks,text
 
     if not is_large_file(soup) and is_page_informative(soup):
 
@@ -241,18 +217,6 @@ def is_valid(url):
 
     if "ical" in parsed.query or "facebook" in parsed.query or "twitter" in parsed.query:
         key = False
-    
-    # Parse the query parameters from the URL
-    params = parse_qs(parsed.query)
-    # Construct base URL without query parameters.
-    base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-
-    # # Check for increasing sequence in the parameters which might indicate a trap.
-    # for param, values in params.items():
-    #     for value in values:
-    #         if self.is_increasing_sequence(base_url, param, value):
-    #             # Detected a potential trap based on parameter sequence.
-    #             return False
 
     # Check if the URL's scheme is either HTTP or HTTPS. Invalidate otherwise.
     if parsed.scheme not in set(["http", "https"]):
@@ -291,11 +255,6 @@ def is_valid(url):
     # Invalidate URLs that are unusually long (over 200 characters).
     if len(url) > 200:
         key = False
-
-    # # Invalidate URLs where a single path segment is repeated (a common trap pattern).
-    # path_segments = parsed.path.split('/')
-    # if any(path_segments.count(segment) > 1 for segment in path_segments):
-    #     valid = False
 
     # Invalidate URLs with too many query parameters, potentially indicating a trap.
     # Checking logs shows that the only pages with at least 2 query parameters
@@ -338,7 +297,7 @@ if __name__ == '__main__':
     test_url = "http://evoke.ics.uci.edu"
     test_url = "https://www.ics.uci.edu/faculty/profiles/view_faculty.php?ucinetid=klefstad"
     # test_url = "https://www.stat.uci.edu"
-    # test_url = "https://www.stat.uci.edu/employers-of-statistics-grad-students/"
+    test_url = "https://wics.ics.uci.edu/cropped-img_5885-2-2-jpg/"
     print("Split url:", urlparse(test_url))
     print()
     print("Is valid URL:", is_valid(test_url))
@@ -354,8 +313,8 @@ if __name__ == '__main__':
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
     text = soup.get_text(separator=' ', strip=True)
     
-    links = extract_next_links(test_url, resp)
-    print(links)
+    # links = extract_next_links(test_url, resp)
+    # print(links)
     print()
 
     print("status is not 200?", resp.status != 200)

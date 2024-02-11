@@ -24,12 +24,16 @@ class Worker(Thread):
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 LongestPageHelper.create_longest_page_file()
+                most_common_50 = scraper.get_50_most_common_words(collected_texts)
+                with open("deliverable_question_3.txt", "w") as w_file:
+                    for word, freq in most_common_50:
+                        w_file.write(f"{word}: {freq}\n")
                 break
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
-            scraped_urls,_ = scraper.scraper(tbd_url, resp)
+            scraped_urls, collected_texts = scraper.scraper(tbd_url, resp)
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)

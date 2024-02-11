@@ -25,3 +25,4 @@ if __name__ == "__main__":
         main(args.config_file, args.restart)
     except KeyboardInterrupt:
         LongestPageHelper.create_longest_page_file()
+        
