@@ -14,12 +14,15 @@ unique_contents = []
 
 
 def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
-    # if not is_crawl_allowed(url):
-    #     print(f"Crawling disallowed by robots.txt: {url}")
+    
+    #check dept avoid traps
     if depth > max_depth:
         return [], collected_texts
+    
     links, text_content = extract_next_links(url, resp)
+    #filter stopwords
     filtered_text = get_no_stop_words(text_content)
+    #accumulate text content
     collected_texts.append(filtered_text)
     most_common_50 = get_50_most_common_words(collected_texts)
 
@@ -38,14 +41,14 @@ def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
     return valid_links,collected_texts
 
 from collections import Counter
-
+#take collected text from webpage and return 50 most common ones
 def get_50_most_common_words(collected_texts):
     all_words = ' '.join(collected_texts).split()
     word_counts = Counter(all_words)
     most_common_50 = word_counts.most_common(50)
     return most_common_50
 
-
+# load stop word from text file and return stop word
 def load_stop_words(file_path):
     with open(file_path, 'r') as file:
         stop_words = set(file.read().strip().split('\n'))
@@ -68,7 +71,7 @@ def is_large_file(soup, max_size_mb=5):
         return file_size > max_size_mb
     return False
 
-
+# return filtered text without stopwords
 def get_no_stop_words(page_text: str):
     stop_words_file = "stopword.txt"
     stop_words = load_stop_words(stop_words_file)
@@ -174,7 +177,7 @@ def extract_next_links(url, resp):
 
     return hyperlinks,text
 
-
+#add new url to history trap list
 historytrap = set()
 def add_history(url):
     historytrap.add(url)
@@ -206,7 +209,7 @@ def is_allowed_domain(netloc: str):
     
     return False
 
-
+# intake urls,  determine if urls are valid for scraping
 def is_valid(url):
     if url in historytrap:
         # print("HERE ", url)
@@ -226,6 +229,7 @@ def is_valid(url):
         key = False
 
     try:
+        #check urls with calender patterns
         if re.search(r'\/\d{4}[-\/]\d{2}[-\/]\d{2}\/|\/\d{4}[-\/]\d{2}\/', parsed.path.lower()):
             key=False
         
