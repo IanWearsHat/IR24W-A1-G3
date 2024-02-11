@@ -5,9 +5,14 @@ import requests
 import socket
 
 class RobotsHelper:
+    """
+    Helper for reading robots and sitemaps.
+    Essentially a wrapper for urllib.robotparser.RobotFileParser
+    """
     sitemaps_seen = set()
 
     def __init__(self, base_url: str):
+        """Sets a robots.txt path and creates a RobotFileParser"""
         parsed = urlparse(base_url)
         base_url = parsed.scheme + "://" + parsed.netloc
 
@@ -22,6 +27,11 @@ class RobotsHelper:
         self.rp = RobotFileParser()
 
     def read_robots_url(self) -> bool:
+        """
+        Reads the robots.txt path
+        
+        Doing this on initialization seems to run into a read timeout error.
+        """
         try:
             self.rp.set_url(self.robots_path)
             self.rp.read()
@@ -35,6 +45,12 @@ class RobotsHelper:
         return self.rp.can_fetch("*", url)
     
     def _get_sitemap_links(self, sitemap_url: str) -> list:
+        """
+        Returns the sitemap links given a url.
+
+        If there are sitemaps within the sitemap, the function
+        recursively runs until we reach the actual child urls.
+        """
         links = []
     
         r = requests.get(sitemap_url)
@@ -52,6 +68,10 @@ class RobotsHelper:
         return links
     
     def get_links_from_sitemap(self) -> list:
+        """
+        Public function that also checks if the sitemap has been seen
+        to not recursively call.
+        """
         if self.robots_path in RobotsHelper.sitemaps_seen:
             return list()
 
@@ -68,10 +88,23 @@ class RobotsHelper:
 
 
 class RobotsHelperFactory:
+    """
+    Only has one function to get a RobotsHelper
+
+    The purpose of this class is to keep track of if a
+    RobotsHelper was already created for a domain to
+    improve runtime.
+    """
     robot_helpers = {}
 
     @classmethod
     def get_helper(cls, url: str) -> tuple[RobotsHelper, bool]:
+        """
+        If a RobotHelper was already created in the robot_helpers dict,
+        return that and whether or not robots was read successfully.
+
+        Otherwise, create a new RobotHelper object and attempt to read robots.txt.
+        """
         parsed = urlparse(url)
         if parsed.netloc in RobotsHelperFactory.robot_helpers:
             rh, has_read = RobotsHelperFactory.robot_helpers[parsed.netloc]

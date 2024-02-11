@@ -85,6 +85,7 @@ def decode_html(html_string):
 
 
 def has_repeating_dir(url: str):
+    """Returns if a url has repeating directories, potentially indicating a trap"""
     parsed = urlparse(url)
     split_dirs = [i for i in parsed.path.split("/") if i != '']
 
@@ -198,6 +199,7 @@ def is_large_file(soup, max_size_mb=5):
 
 
 def is_allowed_domain(netloc: str):
+    """Restricts authority to only be in 4 domains"""
     if any(domain in netloc for domain in set([".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu"])):
         return True
     

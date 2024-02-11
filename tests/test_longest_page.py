@@ -2,6 +2,11 @@ from unittest import TestCase
 from utils.deliverable_helpers import LongestPageHelper
 
 class TestLongestPage(TestCase):
+    """
+    Tests to ensure LongestPageHelper updates its
+    longest_page_and_count dictionary correctly
+    """
+
     def test_smaller_pages_dont_update(self):
         LongestPageHelper.reset_longest_page()
 

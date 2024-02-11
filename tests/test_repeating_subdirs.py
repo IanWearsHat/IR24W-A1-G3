@@ -2,6 +2,9 @@ from unittest import TestCase
 from scraper import has_repeating_dir
 
 class TestRepeatingSubdirs(TestCase):
+    """
+    Tests the has_repeating_dir function
+    """
     def __init__(self, *args, **kwargs):
         super(TestRepeatingSubdirs, self).__init__(*args, **kwargs)
         self.base_url = "https://www.bruh.com/"
