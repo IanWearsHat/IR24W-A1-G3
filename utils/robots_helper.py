@@ -1,10 +1,14 @@
 from urllib.robotparser import RobotFileParser
+from urllib.parse import urlparse
 import requests
 import socket
 
 
 class RobotsHelper:
     def __init__(self, base_url: str):
+        parsed = urlparse(base_url)
+        base_url = parsed.netloc
+
         if '/' == base_url[-1]:
             base_url = base_url[:-1]
 
@@ -32,8 +36,8 @@ class RobotsHelper:
 
 
 if __name__ == "__main__":
-    rh = RobotsHelper("https://docs.python.org/")
+    rh = RobotsHelper("https://www.informatics.uci.edu")
     if rh.robots_file_exists and rh.has_read_robots_url():
-        print(rh.can_fetch("https://docs.python.org/a"))
+        print(rh.can_fetch("https://www.informatics.uci.edu/support/champion-research"))
     else:
         print("doesnt exist")

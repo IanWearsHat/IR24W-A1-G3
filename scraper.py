@@ -5,6 +5,7 @@ from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 from utils.deliverable_helpers import LongestPageHelper
 from generate_unique_without_fragments import url_without_fragment
 from cos_sim import compute_cosine_similarity
+from utils.robots_helper import RobotsHelper
 
 # For cosine similarity, but cosine similarity takes a bit too long
 # so these remain unused
@@ -145,6 +146,9 @@ def extract_next_links(url, resp):
 
     if (resp.status != 200):
         return list()
+    
+    rh = RobotsHelper(url)
+    can_use_robots_file = rh.robots_file_exists and rh.has_read_robots_url()
 
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
     text = soup.get_text(separator=' ', strip=True)
@@ -167,8 +171,13 @@ def extract_next_links(url, resp):
                 continue
 
             if is_valid(link_url) and not has_repeating_dir(link_url):
-                hyperlinks.append(link_url)
-    
+
+                if can_use_robots_file:
+                    if rh.can_fetch(link_url):
+                        hyperlinks.append(link_url)
+                else:
+                    hyperlinks.append(link_url)
+
     return hyperlinks
 
 
@@ -206,7 +215,7 @@ def is_allowed_domain(netloc: str):
 
 def is_valid(url):
     if url in historytrap:
-        print("HERE ", url)
+        # print("HERE ", url)
         return False
     key = True
     # Parse the URL into components.
@@ -245,7 +254,7 @@ def is_valid(url):
                         r"|flt|fmt|font|fp|ft|gif|h|H|hdb |edabu|hdl |hid|hpp |hrc|src"
                         r"|HRC|src|html|hxx|Hxx|HXX|ico|idl |IDL|ih|ilb|inc|inf|ini|inl"
                         r"|ins|java|jar|jnl|jpg|js|jsp|kdelnk|l|lgt|lib|lin|ll|LN3|lng"
-                        r"|lnk|lnx|LOG|lst|olver|.lst|lst|olenv|mac|MacOS|map|mk|make"
+                        r"|lnk|lnx|LOG|lst|olver|.lst|lst|olenv|m|mac|MacOS|map|mk|make"
                         r"|MK|make|mod|NT2|o|obj|par|pfa|pfb|pl|PL|plc|pld|PLD|plf|pm"
                         r"|pmk|pre|cpcomp|PRJ|prt|PS|ptr|r|rc|make|rdb |res|s|S|sbl"
                         r"|scp|scr|sda|sdb|sdc|sdd|sdg|sdm|sds|sdv|sdw|sdi|seg|SEG"
