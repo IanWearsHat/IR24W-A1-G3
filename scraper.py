@@ -52,6 +52,7 @@ def load_stop_words(file_path):
     return stop_words
 
 
+# This part is for detect no information 
 def is_page_informative(page, max_words = 180):
     text_content = page.get_text().strip() # get text from page and remove ending space
     text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
@@ -60,7 +61,7 @@ def is_page_informative(page, max_words = 180):
         return True
     return False
 
-
+# This is for detect and avoid very large files
 def is_large_file(soup, max_size_mb=5):
     content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
     if content_length:
@@ -179,23 +180,6 @@ def extract_next_links(url, resp):
 historytrap = set()
 def add_history(url):
     historytrap.add(url)
-
-
-def is_page_informative(page, max_words = 100):
-    text_content = page.get_text().strip() # get text from page and remove ending space
-    text_content = re.sub(r'[^a-zA-Z0-9]', ' ', text_content) # use regular expression to replace special characters with space
-    tokens = re.findall(r'\w+', text_content, re.IGNORECASE) # get token
-    if len(tokens) > max_words:
-        return True
-    return False
-
-
-def is_large_file(soup, max_size_mb=5):
-    content_length = soup.find("meta", attrs={"name": "content-length"}) # get the length of the html file
-    if content_length:
-        file_size = int(content_length["content"]) / (1024 * 1024) # transform to MB
-        return file_size > max_size_mb
-    return False
 
 
 def is_allowed_domain(netloc: str):
