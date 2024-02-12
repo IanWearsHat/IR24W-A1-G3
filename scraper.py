@@ -33,7 +33,7 @@ def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
     # print("check content ",collected_texts)
     
     valid_links = []
-    with open("urls.txt", "w") as save_all_valid_urls:
+    with open("urls.txt", "a") as save_all_valid_urls:
         for link in links:
             if is_valid(link):
                 save_all_valid_urls.write(link + "\n")
