@@ -11,9 +11,10 @@ import time
 
 class Worker(Thread):
     events = {
-        "python.org": (Event(), Lock()),
-        "youtube.com": (Event(), Lock()),
-        "google.com": (Event(), Lock()),
+        "ics.uci.edu": (Event(), Lock()),
+        "cs.uci.edu": (Event(), Lock()),
+        "informatics.uci.edu": (Event(), Lock()),
+        "stat.uci.edu": (Event(), Lock()),
     }
 
     all_workers = {}
