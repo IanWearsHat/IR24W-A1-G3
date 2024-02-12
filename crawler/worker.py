@@ -23,7 +23,6 @@ class Worker(Thread):
             event[0].set()
 
         Worker.all_workers[worker_id] = Event()
-        print(Worker.all_workers)
 
         self.worker_id = worker_id
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
@@ -42,11 +41,8 @@ class Worker(Thread):
         return True
 
     def get_domain(self, netloc):
-        # before_set = set([".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu"])
-        # after_set = set(["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"])
-
-        before_set = [".python.org", ".google.com", ".youtube.com"]
-        after_set = ["python.org", "google.com", "youtube.com"]
+        before_set = set([".ics.uci.edu", ".cs.uci.edu", ".informatics.uci.edu", ".stat.uci.edu"])
+        after_set = set(["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"])
 
         for domain in before_set:
             if domain in netloc:
@@ -95,14 +91,14 @@ class Worker(Thread):
 
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
-                f"Downloaded {tbd_url}, status <{resp.status}>, ")
-                # f"using cache {self.config.cache_server}.")
+                f"Downloaded {tbd_url}, status <{resp.status}>, "
+                f"using cache {self.config.cache_server}.")
             scraped_urls, collected_texts = scraper.scraper(tbd_url, resp)
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
-            # time.sleep(self.config.time_delay)
+
             event_used.set()
             self.logger.info(f"{domain} freed")
-            time.sleep(0.5)
+            time.sleep(self.config.time_delay)
             

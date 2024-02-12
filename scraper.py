@@ -20,18 +20,16 @@ def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
         return [], collected_texts
     
     links, text_content = extract_next_links(url, resp)
-    
     #filter stopwords
     filtered_text = get_no_stop_words(text_content)
     #accumulate text content
     collected_texts.append(filtered_text)
     most_common_50 = get_50_most_common_words(collected_texts)
-    return links, collected_texts
 
     # Print the 50 most common words with their frequencies
-    # print("The 50 most common words are:")
-    # for word, freq in most_common_50:
-    #     print(f"{word}: {freq}")
+    print("The 50 most common words are:")
+    for word, freq in most_common_50:
+        print(f"{word}: {freq}")
     # print("check content ",collected_texts)
     
     valid_links = []
@@ -146,18 +144,6 @@ def extract_next_links(url, resp):
 
     # Return a list with the hyperlinks (as strings) scraped from resp.raw_response.content
     hyperlinks = []
-    soup = BeautifulSoup(resp.raw_response, "lxml")
-    text = soup.get_text(separator=' ', strip=True)
-    LongestPageHelper.update_longest_page(url, text)
-    return [
-        "https://docs.python.org/3/contents.html",
-        "https://docs.python.org/3/whatsnew/3.12.html",
-        "https://docs.python.org/3/bugs.html",
-        "https://docs.python.org/3.9/contents.html",
-        "https://docs.python.org/3/tutorial/datastructures.html",
-        "https://docs.python.org/3/tutorial/controlflow.html",
-        "https://docs.python.org/3/tutorial/introduction.html"
-        ], text
 
     if (resp.status != 200):
         return list(), ""
