@@ -21,9 +21,9 @@ class LongestPageHelper:
             LongestPageHelper.longest_page_and_count["text_length"] = word_count
     
     @classmethod
-    def create_longest_page_file(cls) -> None:
+    def create_longest_page_file(cls, worker_id) -> None:
         """Creates a file detailing the longest page and its word count"""
-        with open("deliverable_question_2.txt", "w", encoding="utf-8") as w_file:
+        with open(f"{worker_id}_deliverable_question_2.txt", "w", encoding="utf-8") as w_file:
             url = LongestPageHelper.longest_page_and_count["url"]
             text_length = LongestPageHelper.longest_page_and_count["text_length"]
             to_write = f"Longest Page URL: {url}\nLongest Page Length: {text_length}"
