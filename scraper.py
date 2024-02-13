@@ -18,7 +18,6 @@ def scraper(url, resp, depth=0, max_depth=3,collected_texts=[]):
     #check dept avoid traps
     if depth > max_depth:
         return [], collected_texts
-    
     links, text_content = extract_next_links(url, resp)
     #filter stopwords
     filtered_text = get_no_stop_words(text_content)

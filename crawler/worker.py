@@ -1,4 +1,5 @@
 from threading import Thread, Event, Lock
+from queue import Empty
 from urllib.parse import urlparse
 
 from inspect import getsource
@@ -10,6 +11,8 @@ import time
 
 
 class Worker(Thread):
+    # reading from a dict is inherently thread-safe, no need for explicit lock
+    # https://docs.python.org/3/glossary.html#term-global-interpreter-lock
     events = {
         "ics.uci.edu": (Event(), Lock()),
         "cs.uci.edu": (Event(), Lock()),
@@ -60,9 +63,10 @@ class Worker(Thread):
         collected_texts = []
         while True:
             Worker.all_workers[self.worker_id].clear()
-
-            tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
+            try:
+                tbd_url = self.frontier.get_tbd_url()
+            except Empty:
+            # if not tbd_url:
                 Worker.all_workers[self.worker_id].set()
                 time.sleep(1)
                 if not Worker.all_threads_stopped():
@@ -76,19 +80,24 @@ class Worker(Thread):
                         w_file.write(f"{word}: {freq}\n")
                 break
             
+            thread_debugging_enabled = False
+
             domain = urlparse(tbd_url).netloc
             domain = self.get_domain(domain)
             event_used, event_lock = Worker.events[domain]
             with event_lock:
                 just_waited = False
                 if not event_used.is_set():
-                    self.logger.info(f"Waiting for {domain}")
+                    if thread_debugging_enabled:
+                        self.logger.info(f"Waiting for {domain}")
                     event_used.wait()
                     just_waited = True
-                self.logger.info(f"Using {domain}")
+                if thread_debugging_enabled:
+                    self.logger.info(f"Using {domain}")
                 event_used.clear()
                 if just_waited:
-                    time.sleep(0.5)
+                    time.sleep(self.config.time_delay / 2)
+                time.sleep(self.config.time_delay / 2)
 
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
@@ -99,7 +108,8 @@ class Worker(Thread):
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
 
-            event_used.set()
-            self.logger.info(f"{domain} freed")
-            time.sleep(self.config.time_delay)
             
+            event_used.set()
+            if thread_debugging_enabled:
+                self.logger.info(f"{domain} freed")
+            time.sleep(self.config.time_delay)

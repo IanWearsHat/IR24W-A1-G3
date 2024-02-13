@@ -24,5 +24,5 @@ if __name__ == "__main__":
     try:
         main(args.config_file, args.restart)
     except KeyboardInterrupt:
-        LongestPageHelper.create_longest_page_file()
+        LongestPageHelper.create_longest_page_file("Interrupted")
         
