@@ -1,3 +1,9 @@
+Group Members
+-------------------------
+Ian Dai - idai - 80419415
+Xiao Du - xdu7 - 56714415
+Henry Wang - penghanw - 85703671
+
 ABOUT
 -------------------------
 This is the base implementation of a full crawler that uses a spacetime
